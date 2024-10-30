@@ -46,77 +46,137 @@ const viewEmployees = () => {
     mainMenu();
   });
 };
-// Function to add a department
 const addDepartment = async () => {
-    try {
-        const { departmentName } = await inquirer.prompt({
-            type: 'input',
-            name: 'departmentName',
-            message: 'Enter the name of the department:',
-        });
-
-        await client.query('INSERT INTO department (name) VALUES ($1);', [departmentName]);
-        console.log(`Department "${departmentName}" added successfully.`);
-
-        // After adding, display the updated list of departments
-        viewDepartments();
-    } catch (error) {
-        console.error('Error adding department:', error);
-    }
-};
-const addRole = async () => {
+  let departmentName; // Define departmentName outside the try block
   try {
-      // Fetch departments from the database
-      const res = await client.query('SELECT id, name FROM department;');
-      const departments = res.rows;
-
-      // Create department choices for the prompt
-      const departmentChoices = departments.map(department => ({
-          name: department.name,
-          value: department.id,
-      }));
-
-      // Prompt for role details
-      const { roleTitle, roleSalary, departmentId } = await inquirer.prompt([
-          {
-              type: 'input',
-              name: 'roleTitle',
-              message: 'Enter the title of the role:',
-          },
-          {
-              type: 'number',
-              name: 'roleSalary',
-              message: 'Enter the salary for the role:',
-          },
-          {
-              type: 'list',
-              name: 'departmentId',
-              message: 'Select the department this role belongs to:',
-              choices: departmentChoices,
-          },
-      ]);
-
-      // Insert the new role without specifying the id
-      await client.query('INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3);', [roleTitle, roleSalary, departmentId]);
-      console.log(`Role "${roleTitle}" added successfully.`);
-
-      // Append the selected department to the list
-      const selectedDepartment = departments.find(dept => dept.id === departmentId);
-      departments.push(selectedDepartment);
-
-      // Display the updated list of departments
-      console.log('Updated list of roles:');
-      departments.forEach(department => {
-          console.log(`- ${department.name}`);
+      const response = await inquirer.prompt({
+          type: 'input',
+          name: 'departmentName',
+          message: 'Enter the name of the department:',
       });
+      departmentName = response.departmentName; // Assign the value inside the try block
+      await client.query('INSERT INTO department (name) VALUES ($1);', [departmentName]);
+      console.log(`Department "${departmentName}" added successfully.`);
+      mainMenu();
   } catch (error) {
-      if (error.code === '23505') { // Duplicate key error code
-          console.error('Error adding role: duplicate key value violates unique constraint "role_pkey". This role already exists. Please try a different title.');
+      if (error.code === '23505') { // 23505 is the error code for unique violation in PostgreSQL
+          console.error(`Error: Department "${departmentName}" already exists.`);
       } else {
-          console.error('Error adding role:', error);
+          console.error('Error adding department:', error);
       }
   }
 };
+// const addRole = async () => {
+//   try {
+//       // Fetch departments from the database
+//       const res = await client.query('SELECT id, name FROM department;');
+//       const departments = res.rows;
+
+//       // Create department choices for the prompt
+//       const departmentChoices = departments.map(department => ({
+//           name: department.name,
+//           value: department.id,
+//       }));
+
+//       // Prompt for role details
+//       const { roleTitle, roleSalary, departmentId } = await inquirer.prompt([
+//           {
+//               type: 'input',
+//               name: 'roleTitle',
+//               message: 'Enter the title of the role:',
+//           },
+//           {
+//               type: 'number',
+//               name: 'roleSalary',
+//               message: 'Enter the salary for the role:',
+//           },
+//           {
+//               type: 'list',
+//               name: 'departmentId',
+//               message: 'Select the department this role belongs to:',
+//               choices: departmentChoices,
+//           },
+//       ]);
+
+//       // Insert the new role without specifying the id
+//       await client.query('INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3);', [roleTitle, roleSalary, departmentId]);
+//       console.log(`Role "${roleTitle}" added successfully.`);
+
+//       // Append the selected department to the list
+//       const selectedDepartment = departments.find(dept => dept.id === departmentId);
+//       departments.push(selectedDepartment);
+
+//       // Display the updated list of departments
+//       console.log('Updated list of roles:');
+//       departments.forEach(department => {
+//           console.log(`- ${department.name}`);
+//       });
+//   } catch (error) {
+//       if (error.code === '23505') { // Duplicate key error code
+//           console.error('Error adding role: duplicate key value violates unique constraint "role_pkey". This role already exists. Please try a different title.');
+//       } else {
+//           console.error('Error adding role:', error);
+//       }
+//   }
+// };
+
+// // addEmployee function()
+// const addEmployee = async () => {
+//   try {
+//       // Fetch roles from the database
+//       const resRoles = await client.query('SELECT id, title FROM role;');
+//       const roles = resRoles.rows;
+
+//       // Create role choices for the prompt
+//       const roleChoices = roles.map(role => ({
+//           name: role.title,
+//           value: role.id,
+//       }));
+
+//       // Fetch employees from the database
+//       const resEmployees = await client.query('SELECT id, first_name, last_name FROM employee;');
+//       const employees = resEmployees.rows;
+
+//       // Create employee choices for the prompt
+//       const employeeChoices = employees.map(employee => ({
+//           name: `${employee.first_name} ${employee.last_name}`,
+//           value: employee.id,
+//       }));
+
+//       // Prompt for employee details
+//       const { firstName, lastName, roleId, managerId } = await inquirer.prompt([
+//           {
+//               type: 'input',
+//               name: 'firstName',
+//               message: 'Enter the first name of the employee:',
+//           },
+//           {
+//               type: 'input',
+//               name: 'lastName',
+//               message: 'Enter the last name of the employee:',
+//           },
+//           {
+//               type: 'list',
+//               name: 'roleId',
+//               message: 'Select the role for the employee:',
+//               choices: roleChoices,
+//           },
+//           {
+//               type: 'list',
+//               name: 'managerId',
+//               message: 'Select the manager for the employee:',
+//               choices: employeeChoices,
+//           },
+//       ]);
+
+//       // Insert the new employee without specifying the id
+//       await client.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4);', [firstName, lastName, roleId, managerId]);
+//       console.log(`Employee "${firstName} ${lastName}" added successfully.`);
+//   } catch (error) {
+//       console.error('Error adding employee:', error);
+//   }
+// };
+
 // const deleteRole = async () => {
 //   try {
 //       // Fetch roles from the database
